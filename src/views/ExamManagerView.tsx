@@ -4,20 +4,21 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { FileSpreadsheet, Plus, Play, ShieldAlert, Sparkles, Clock, CheckCircle2, Lock, Shuffle, Settings2, Trash2 } from 'lucide-react';
+import { FileSpreadsheet, Plus, Play, ShieldAlert, Sparkles, Clock, CheckCircle2, Lock, Shuffle, Settings2, Trash2, BookOpen } from 'lucide-react';
 import { api } from '../services/api';
-import { Exam, QuestionBank } from '../types';
+import { Exam, QuestionBank, Subject } from '../types';
 
 export const ExamManagerView: React.FC = () => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [banks, setBanks] = useState<QuestionBank[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [subjectId, setSubjectId] = useState('sub-phys');
+  const [subjectId, setSubjectId] = useState('sub-math');
   const [bankId, setBankId] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(45);
   const [passingPercentage, setPassingPercentage] = useState(60);
@@ -41,10 +42,16 @@ export const ExamManagerView: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [examsData, banksData] = await Promise.all([api.getExams(), api.getQuestionBanks()]);
+      const [examsData, banksData, subjectsData] = await Promise.all([
+        api.getExams(),
+        api.getQuestionBanks(),
+        api.getSubjects(),
+      ]);
       setExams(examsData);
       setBanks(banksData);
+      setSubjects(subjectsData);
       if (banksData.length > 0) setBankId(banksData[0].id);
+      if (subjectsData.length > 0) setSubjectId(subjectsData[0].id);
     } catch (e) {
       console.error(e);
     } finally {
@@ -84,6 +91,16 @@ export const ExamManagerView: React.FC = () => {
     }
   };
 
+  const handleDeleteExam = async (id: string, title: string) => {
+    if (!window.confirm(`هل أنت متأكد من حذف اختبار (${title})؟`)) return;
+    try {
+      await api.deleteExam(id);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || 'فشل حذف الاختبار');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-gray-800 bg-[#181818] p-6">
@@ -110,11 +127,20 @@ export const ExamManagerView: React.FC = () => {
           <div key={exam.id} className="rounded-3xl border border-gray-800 bg-[#181818] p-6 space-y-4 hover:border-yellow-500/40 transition-all">
             <div className="flex items-center justify-between">
               <span className="rounded-full bg-yellow-500/10 px-3 py-1 text-[10px] font-extrabold text-yellow-400 border border-yellow-500/20">
-                {exam.mode === 'official' ? 'رسمي' : 'تدريب'}
+                المادة: {exam.subjectName || 'غير محدد'}
               </span>
-              <span className="text-xs text-gray-400 font-mono flex items-center gap-1">
-                <Clock size={14} className="text-yellow-400" /> {exam.durationMinutes} دقيقة
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-mono flex items-center gap-1">
+                  <Clock size={14} className="text-yellow-400" /> {exam.durationMinutes} دقيقة
+                </span>
+                <button
+                  onClick={() => handleDeleteExam(exam.id, exam.title)}
+                  className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                  title="حذف الاختبار"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
 
             <div>
@@ -168,11 +194,26 @@ export const ExamManagerView: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
+                  <label className="block text-gray-300 mb-1">المادة الدراسية</label>
+                  <select
+                    value={subjectId}
+                    onChange={(e) => setSubjectId(e.target.value)}
+                    className="w-full rounded-2xl bg-gray-900 p-3 text-white border border-gray-800 focus:border-yellow-500"
+                  >
+                    {subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nameAr} ({s.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-gray-300 mb-1">بنك الأسئلة المصدر</label>
                   <select
                     value={bankId}
                     onChange={(e) => setBankId(e.target.value)}
-                    className="w-full rounded-2xl bg-gray-900 p-3 text-white border border-gray-800"
+                    className="w-full rounded-2xl bg-gray-900 p-3 text-white border border-gray-800 focus:border-yellow-500"
                   >
                     {banks.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -181,7 +222,9 @@ export const ExamManagerView: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-gray-300 mb-1">مدة الاختبار (بالدقائق)</label>
                   <input
@@ -193,9 +236,7 @@ export const ExamManagerView: React.FC = () => {
                     className="w-full rounded-2xl bg-gray-900 p-3 text-white border border-gray-800"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-gray-300 mb-1">عدد الأسئلة للنموذج العشوائي</label>
                   <input

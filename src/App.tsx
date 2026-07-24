@@ -16,6 +16,9 @@ import { StudentDashboardView } from './views/StudentDashboardView';
 import { StudentExamView } from './views/StudentExamView';
 import { ExamResultView } from './views/ExamResultView';
 import { StudentManagementView } from './views/StudentManagementView';
+import { TeacherManagementView } from './views/TeacherManagementView';
+import { ResultsManagerView } from './views/ResultsManagerView';
+import { SubjectsView } from './views/SubjectsView';
 import { BackupView } from './views/BackupView';
 import { LogsView } from './views/LogsView';
 import { SettingsView } from './views/SettingsView';
@@ -86,15 +89,10 @@ function AppContent() {
               {currentTab === 'monitoring' && <LiveMonitoringView />}
               {currentTab === 'question_banks' && <QuestionBanksView />}
               {currentTab === 'exams' && <ExamManagerView />}
-              {currentTab === 'results' && (
-                <StudentDashboardView
-                  onStartExam={(eId) => setActiveExamId(eId)}
-                  onViewResult={(rId) => setActiveResultId(rId)}
-                />
-              )}
+              {currentTab === 'results' && <ResultsManagerView onViewResult={(rId) => setActiveResultId(rId)} />}
               {currentTab === 'students' && <StudentManagementView />}
-              {currentTab === 'teachers' && <StudentManagementView />}
-              {currentTab === 'subjects' && <QuestionBanksView />}
+              {currentTab === 'teachers' && <TeacherManagementView />}
+              {currentTab === 'subjects' && <SubjectsView />}
               {currentTab === 'backups' && <BackupView />}
               {currentTab === 'logs' && <LogsView />}
               {currentTab === 'settings' && <SettingsView />}

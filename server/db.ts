@@ -244,6 +244,24 @@ function initTables(database: Database) {
     CREATE INDEX IF NOT EXISTS idx_results_student ON results(student_id);
   `);
 
+  // Ensure essential subjects (including Math / الرياضيات) exist in every database
+  const now = new Date().toISOString();
+  const defaultSubjects = [
+    ['sub-math', 'MATH-101', 'Mathematics', 'الرياضيات', 'الرياضيات العامة والجبر والهندسة والتفاضل والتكامل'],
+    ['sub-phys', 'PHYS-101', 'Physics', 'الفيزياء', 'الفيزياء الكلاسيكية والحديثة والكهربية'],
+    ['sub-chem', 'CHEM-101', 'Chemistry', 'الكيمياء', 'الكيمياء العضوية والتحليلية والحرارية'],
+    ['sub-bio', 'BIO-101', 'Biology', 'الأحياء والعلوم الحيوية', 'علم الأحياء ووراثة وتكاثر وتراكيب خلوية'],
+    ['sub-cs', 'CS-201', 'Computer Science & IT', 'الحاسب الآلي والشبكات', 'أساسيات البرمجة وقواعد البيانات والشبكات المحليّة'],
+    ['sub-eng', 'ENG-101', 'English Language', 'اللغة الإنجليزية', 'قواعد وتطبيقات ولغويات ومفردات اللغة الإنجليزية'],
+  ];
+
+  for (const sub of defaultSubjects) {
+    database.run(
+      `INSERT OR IGNORE INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [sub[0], sub[1], sub[2], sub[3], sub[4], now]
+    );
+  }
+
   // Check if admin user exists, seed if empty
   const adminCheck = database.exec("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
   if (!adminCheck || adminCheck.length === 0 || adminCheck[0].values.length === 0) {

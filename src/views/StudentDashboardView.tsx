@@ -36,7 +36,15 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({ onSt
 
       setExams(examsData.filter((e) => e.isActive));
       if (user) {
-        setResults(resultsData.filter((r) => r.studentId === user.id || r.studentCode === user.studentId));
+        setResults(
+          resultsData.filter(
+            (r) =>
+              r.studentId === user.id ||
+              (user.studentId && r.studentCode === user.studentId) ||
+              r.studentCode === user.username ||
+              r.studentName === user.fullName
+          )
+        );
       }
       setAnnouncements(announcementsData);
     } catch (e) {

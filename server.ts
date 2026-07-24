@@ -239,10 +239,105 @@ async function startServer() {
     res.json({ success: true });
   });
 
+  // Teachers & Admins Management
+  app.get('/api/teachers', (req: Request, res: Response) => {
+    const rows = queryAll(`SELECT * FROM users WHERE role IN ('teacher', 'admin') ORDER BY created_at DESC`);
+    const teachers = rows.map((r) => ({
+      id: r.id,
+      username: r.username,
+      fullName: r.full_name,
+      role: r.role,
+      email: r.email,
+      phone: r.phone,
+      school: r.school,
+      notes: r.notes,
+      status: r.status,
+      createdAt: r.created_at,
+    }));
+    res.json(teachers);
+  });
+
+  app.post('/api/teachers', (req: Request, res: Response) => {
+    const { fullName, username, password, email, phone, school, role, notes } = req.body;
+    if (!fullName || !username) {
+      return res.status(400).json({ error: 'من فضلك أدخل الاسم الكامل واسم المستخدم' });
+    }
+    const id = `u-tch-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const now = new Date().toISOString();
+
+    runSql(
+      `INSERT INTO users (id, username, password_hash, full_name, role, email, phone, school, notes, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+      [id, username, password || '123456', fullName, role || 'teacher', email || '', phone || '', school || '', notes || '', now]
+    );
+
+    res.json({ success: true, id });
+  });
+
+  app.delete('/api/teachers/:id', (req: Request, res: Response) => {
+    runSql(`DELETE FROM users WHERE id = ? AND role IN ('teacher', 'admin')`, [req.params.id]);
+    res.json({ success: true });
+  });
+
+  // Subjects API
+  app.get('/api/subjects', (req: Request, res: Response) => {
+    const rows = queryAll(`SELECT * FROM subjects ORDER BY name_ar ASC`);
+    const subjects = rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      nameAr: r.name_ar,
+      description: r.description,
+      createdAt: r.created_at,
+    }));
+    res.json(subjects);
+  });
+
+  app.post('/api/subjects', (req: Request, res: Response) => {
+    const { code, name, nameAr, description } = req.body;
+    if (!nameAr || !code) {
+      return res.status(400).json({ error: 'من فضلك أدخل كود واسم المادة باللغة العربية' });
+    }
+
+    const id = `sub-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    runSql(
+      `INSERT INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, code, name || nameAr, nameAr, description || '', now]
+    );
+
+    res.json({ success: true, id });
+  });
+
+  app.put('/api/subjects/:id', (req: Request, res: Response) => {
+    const { code, name, nameAr, description } = req.body;
+    runSql(
+      `UPDATE subjects SET code = ?, name = ?, name_ar = ?, description = ? WHERE id = ?`,
+      [code, name, nameAr, description, req.params.id]
+    );
+    res.json({ success: true });
+  });
+
+  app.delete('/api/subjects/:id', (req: Request, res: Response) => {
+    runSql(`DELETE FROM subjects WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
+  });
+
   // Question Banks
   app.get('/api/question-banks', (req: Request, res: Response) => {
-    const banks = queryAll(`SELECT qb.*, s.name as subjectName, (SELECT COUNT(*) FROM questions q WHERE q.bank_id = qb.id) as questionCount FROM question_banks qb LEFT JOIN subjects s ON qb.subject_id = s.id ORDER BY qb.created_at DESC`);
+    const banks = queryAll(`SELECT qb.*, s.name_ar as subjectName, (SELECT COUNT(*) FROM questions q WHERE q.bank_id = qb.id) as questionCount FROM question_banks qb LEFT JOIN subjects s ON qb.subject_id = s.id ORDER BY qb.created_at DESC`);
     res.json(banks);
+  });
+
+  app.put('/api/question-banks/:id', (req: Request, res: Response) => {
+    const { title, subjectId, chapter, lesson, topic, description } = req.body;
+    const now = new Date().toISOString();
+    runSql(
+      `UPDATE question_banks SET title = ?, subject_id = ?, chapter = ?, lesson = ?, topic = ?, description = ?, updated_at = ? WHERE id = ?`,
+      [title, subjectId, chapter || '', lesson || '', topic || '', description || '', now, req.params.id]
+    );
+    res.json({ success: true });
   });
 
   app.post('/api/question-banks', (req: Request, res: Response) => {
@@ -381,7 +476,7 @@ async function startServer() {
 
   // Exams Management
   app.get('/api/exams', (req: Request, res: Response) => {
-    const rows = queryAll(`SELECT e.*, s.name as subjectName, qb.title as bankTitle, (SELECT COUNT(*) FROM questions q WHERE q.bank_id = e.bank_id) as totalBankQuestions FROM exams e LEFT JOIN subjects s ON e.subject_id = s.id LEFT JOIN question_banks qb ON e.bank_id = qb.id ORDER BY e.created_at DESC`);
+    const rows = queryAll(`SELECT e.*, COALESCE(s.name_ar, s.name) as subjectName, qb.title as bankTitle, (SELECT COUNT(*) FROM questions q WHERE q.bank_id = e.bank_id) as totalBankQuestions FROM exams e LEFT JOIN subjects s ON e.subject_id = s.id LEFT JOIN question_banks qb ON e.bank_id = qb.id ORDER BY e.created_at DESC`);
     const exams = rows.map((r) => ({
       id: r.id,
       title: r.title,
@@ -413,6 +508,45 @@ async function startServer() {
       questionCount: r.random_question_count || r.totalBankQuestions || 0,
     }));
     res.json(exams);
+  });
+
+  app.put('/api/exams/:id', (req: Request, res: Response) => {
+    const body = req.body;
+    runSql(
+      `UPDATE exams SET
+        title = ?, description = ?, subject_id = ?, bank_id = ?, duration_minutes = ?,
+        passing_percentage = ?, allowed_attempts = ?, show_result_immediately = ?,
+        show_answers = ?, negative_marking = ?, calculator_allowed = ?, fullscreen_required = ?,
+        randomization_enabled = ?, password_protected = ?, exam_password = ?, random_question_count = ?,
+        is_active = ?
+       WHERE id = ?`,
+      [
+        body.title,
+        body.description || '',
+        body.subjectId,
+        body.bankId,
+        body.durationMinutes || 60,
+        body.passingPercentage || 50,
+        body.allowedAttempts || 1,
+        body.showResultImmediately ? 1 : 0,
+        body.showAnswers ? 1 : 0,
+        body.negativeMarking ? 1 : 0,
+        body.calculatorAllowed ? 1 : 0,
+        body.fullscreenRequired ? 1 : 0,
+        body.randomizationEnabled ? 1 : 0,
+        body.passwordProtected ? 1 : 0,
+        body.examPassword || '',
+        body.randomQuestionCount || 20,
+        body.isActive !== false ? 1 : 0,
+        req.params.id,
+      ]
+    );
+    res.json({ success: true });
+  });
+
+  app.delete('/api/exams/:id', (req: Request, res: Response) => {
+    runSql(`DELETE FROM exams WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
   });
 
   app.post('/api/exams', (req: Request, res: Response) => {
@@ -914,8 +1048,14 @@ async function startServer() {
       timeSpentSeconds: r.time_spent_seconds,
       completedAt: r.completed_at,
       passStatus: r.pass_status,
+      answersReview: JSON.parse(r.answers_review_json || '{}'),
     }));
     res.json(results);
+  });
+
+  app.delete('/api/results/:id', (req: Request, res: Response) => {
+    runSql(`DELETE FROM results WHERE id = ?`, [req.params.id]);
+    res.json({ success: true });
   });
 
   // Backups Management

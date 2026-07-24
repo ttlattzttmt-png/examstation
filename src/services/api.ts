@@ -82,11 +82,39 @@ export const api = {
     }),
   deleteStudent: (id: string) => fetchJson<{ success: boolean }>(`/api/students/${id}`, { method: 'DELETE' }),
 
+  // Teachers
+  getTeachers: () => fetchJson<User[]>(`/api/teachers`),
+  createTeacher: (teacherData: Partial<User> & { password?: string }) =>
+    fetchJson<{ success: boolean; id: string }>(`/api/teachers`, {
+      method: 'POST',
+      body: JSON.stringify(teacherData),
+    }),
+  deleteTeacher: (id: string) => fetchJson<{ success: boolean }>(`/api/teachers/${id}`, { method: 'DELETE' }),
+
+  // Subjects
+  getSubjects: () => fetchJson<Subject[]>(`/api/subjects`),
+  createSubject: (data: { code: string; nameAr: string; name?: string; description?: string }) =>
+    fetchJson<{ success: boolean; id: string }>(`/api/subjects`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateSubject: (id: string, data: Partial<Subject>) =>
+    fetchJson<{ success: boolean }>(`/api/subjects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteSubject: (id: string) => fetchJson<{ success: boolean }>(`/api/subjects/${id}`, { method: 'DELETE' }),
+
   // Question Banks
   getQuestionBanks: () => fetchJson<QuestionBank[]>(`/api/question-banks`),
   createQuestionBank: (data: Partial<QuestionBank>) =>
     fetchJson<{ success: boolean; id: string }>(`/api/question-banks`, {
       method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateQuestionBank: (id: string, data: Partial<QuestionBank>) =>
+    fetchJson<{ success: boolean }>(`/api/question-banks/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     }),
 
@@ -111,6 +139,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  updateExam: (id: string, data: Partial<Exam>) =>
+    fetchJson<{ success: boolean }>(`/api/exams/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteExam: (id: string) => fetchJson<{ success: boolean }>(`/api/exams/${id}`, { method: 'DELETE' }),
 
   // Student Exam Session
   startExam: (examId: string, studentId: string, password?: string) =>
@@ -176,6 +210,7 @@ export const api = {
 
   // Results & Reports
   getResults: () => fetchJson<Result[]>(`/api/results`),
+  deleteResult: (id: string) => fetchJson<{ success: boolean }>(`/api/results/${id}`, { method: 'DELETE' }),
   resetStudentAttempt: (examId: string, studentId: string) =>
     fetchJson<{ success: boolean; message: string }>(`/api/exams/${examId}/reset-attempt`, {
       method: 'POST',

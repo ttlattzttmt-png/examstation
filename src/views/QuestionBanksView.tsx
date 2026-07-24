@@ -6,12 +6,13 @@
 import React, { useState, useEffect } from 'react';
 import { Database, Plus, Search, Upload, FileText, Trash2, Edit, Layers, Copy, HelpCircle } from 'lucide-react';
 import { api } from '../services/api';
-import { QuestionBank, Question } from '../types';
+import { QuestionBank, Question, Subject } from '../types';
 import { QuestionEditorModal } from './QuestionEditorModal';
 import { QuestionBankImportModal } from './QuestionBankImportModal';
 
 export const QuestionBanksView: React.FC = () => {
   const [banks, setBanks] = useState<QuestionBank[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,14 +24,14 @@ export const QuestionBanksView: React.FC = () => {
 
   // Create Bank Form State
   const [newBankTitle, setNewBankTitle] = useState('');
-  const [newBankSubjectId, setNewBankSubjectId] = useState('sub-phys');
+  const [newBankSubjectId, setNewBankSubjectId] = useState('sub-math');
   const [newBankChapter, setNewBankChapter] = useState('الوحدة الأولى');
   const [newBankDescription, setNewBankDescription] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    loadBanks();
+    loadBanksAndSubjects();
   }, []);
 
   useEffect(() => {
@@ -39,13 +40,20 @@ export const QuestionBanksView: React.FC = () => {
     }
   }, [selectedBankId]);
 
-  const loadBanks = async () => {
+  const loadBanksAndSubjects = async () => {
     setIsLoading(true);
     try {
-      const data = await api.getQuestionBanks();
-      setBanks(data);
-      if (data.length > 0 && !selectedBankId) {
-        setSelectedBankId(data[0].id);
+      const [banksData, subjectsData] = await Promise.all([
+        api.getQuestionBanks(),
+        api.getSubjects(),
+      ]);
+      setBanks(banksData);
+      setSubjects(subjectsData);
+      if (banksData.length > 0 && !selectedBankId) {
+        setSelectedBankId(banksData[0].id);
+      }
+      if (subjectsData.length > 0) {
+        setNewBankSubjectId(subjectsData[0].id);
       }
     } catch (e) {
       console.error(e);
@@ -76,7 +84,7 @@ export const QuestionBanksView: React.FC = () => {
       });
       setShowCreateBankModal(false);
       setNewBankTitle('');
-      await loadBanks();
+      await loadBanksAndSubjects();
       setSelectedBankId(res.id);
     } catch (err: any) {
       alert(err.message);
@@ -274,11 +282,13 @@ export const QuestionBanksView: React.FC = () => {
                 <select
                   value={newBankSubjectId}
                   onChange={(e) => setNewBankSubjectId(e.target.value)}
-                  className="w-full rounded-xl bg-gray-900 p-3 text-white border border-gray-800"
+                  className="w-full rounded-xl bg-gray-900 p-3 text-white border border-gray-800 focus:border-yellow-500"
                 >
-                  <option value="sub-phys">الفيزياء (Physics)</option>
-                  <option value="sub-cs">الحاسب الآلي والشبكات (Computer Science)</option>
-                  <option value="sub-chem">الكيمياء (Chemistry)</option>
+                  {subjects.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nameAr} ({s.code})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -317,7 +327,7 @@ export const QuestionBanksView: React.FC = () => {
           onClose={() => setShowAddQuestionModal(false)}
           onSuccess={() => {
             loadQuestions(selectedBankId);
-            loadBanks();
+            loadBanksAndSubjects();
           }}
         />
       )}
@@ -330,7 +340,7 @@ export const QuestionBanksView: React.FC = () => {
           onClose={() => setShowImportModal(false)}
           onSuccess={() => {
             loadQuestions(selectedBankId);
-            loadBanks();
+            loadBanksAndSubjects();
           }}
         />
       )}
