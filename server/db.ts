@@ -274,49 +274,49 @@ function seedDefaultData(database: Database) {
 
   // Admin user
   database.run(
-    `INSERT INTO users (id, username, password_hash, full_name, role, status, created_at)
+    `INSERT OR IGNORE INTO users (id, username, password_hash, full_name, role, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     ['u-admin-1', 'admin', 'admin123', 'البشمهندس / Admin', 'admin', 'active', now]
   );
 
   // Demo Student
   database.run(
-    `INSERT INTO users (id, username, password_hash, full_name, role, student_id, national_id, phone, school, grade, class_name, section, status, created_at)
+    `INSERT OR IGNORE INTO users (id, username, password_hash, full_name, role, student_id, national_id, phone, school, grade, class_name, section, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ['u-student-1', 'student1', '123456', 'احمد محمود السعيد', 'student', 'STU-2026-001', '30105201209988', '01012345678', 'مدرسة البشمهندس الثانوية', 'Grade 12', '12/A', 'Science', 'active', now]
   );
 
   database.run(
-    `INSERT INTO users (id, username, password_hash, full_name, role, student_id, national_id, phone, school, grade, class_name, section, status, created_at)
+    `INSERT OR IGNORE INTO users (id, username, password_hash, full_name, role, student_id, national_id, phone, school, grade, class_name, section, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ['u-student-2', 'student2', '123456', 'سارة علي حسن', 'student', 'STU-2026-002', '30208151207766', '01198765432', 'مدرسة البشمهندس الثانوية', 'Grade 12', '12/A', 'Science', 'active', now]
   );
 
   // Demo Teacher
   database.run(
-    `INSERT INTO users (id, username, password_hash, full_name, role, phone, email, status, created_at)
+    `INSERT OR IGNORE INTO users (id, username, password_hash, full_name, role, phone, email, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ['u-teacher-1', 'teacher1', '123456', 'د. محمد مصطفى', 'teacher', '01200000000', 'teacher@albashmohandes.local', 'active', now]
   );
 
   // Demo Subjects
   database.run(
-    `INSERT INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR IGNORE INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     ['sub-phys', 'PHYS-101', 'Physics', 'الفيزياء', 'الفيزياء الحديثة والكهربية', now]
   );
   database.run(
-    `INSERT INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR IGNORE INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     ['sub-cs', 'CS-201', 'Computer Science & Networks', 'الحاسب الآلي والشبكات', 'أساسيات البرمجة وقواعد البيانات والشبكات المحليّة', now]
   );
   database.run(
-    `INSERT INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR IGNORE INTO subjects (id, code, name, name_ar, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     ['sub-chem', 'CHEM-101', 'Chemistry', 'الكيمياء', 'الكيمياء العضوية والتحليلية', now]
   );
 
   // Demo Question Bank
   const bankId = 'qb-phys-1';
   database.run(
-    `INSERT INTO question_banks (id, title, subject_id, chapter, lesson, topic, description, created_by, created_at, updated_at)
+    `INSERT OR IGNORE INTO question_banks (id, title, subject_id, chapter, lesson, topic, description, created_by, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [bankId, 'بنك أسئلة الفيزياء - الكهربية الكهرومغناطيسية', 'sub-phys', 'الوحدة الأولى', 'الدرس الأول', 'قانون أوم وتوصيل المقاومات', 'بنك أسئلة شامل للكهربية والمقاومات والدوائر المغلقة', 'u-admin-1', now, now]
   );
@@ -328,8 +328,9 @@ function seedDefaultData(database: Database) {
     { id: 'opt-3', text: 'تظل ثابته', isCorrect: false },
     { id: 'opt-4', text: 'تزداد للضعف', isCorrect: false }
   ]);
+  // Questions
   database.run(
-    `INSERT INTO questions (id, bank_id, type, text, subject, chapter, lesson, topic, difficulty, estimated_time, score, tags_json, hints, explanation, options_json, correct_answer_json, created_at, updated_at)
+    `INSERT OR IGNORE INTO questions (id, bank_id, type, text, subject, chapter, lesson, topic, difficulty, estimated_time, score, tags_json, hints, explanation, options_json, correct_answer_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       'q-phys-1', bankId, 'mcq',
@@ -347,7 +348,7 @@ function seedDefaultData(database: Database) {
     { id: 'opt-tf-2', text: 'خطأ (False)', isCorrect: false }
   ]);
   database.run(
-    `INSERT INTO questions (id, bank_id, type, text, subject, chapter, lesson, topic, difficulty, estimated_time, score, tags_json, hints, explanation, options_json, correct_answer_json, created_at, updated_at)
+    `INSERT OR IGNORE INTO questions (id, bank_id, type, text, subject, chapter, lesson, topic, difficulty, estimated_time, score, tags_json, hints, explanation, options_json, correct_answer_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       'q-phys-2', bankId, 'tf',
@@ -366,7 +367,7 @@ function seedDefaultData(database: Database) {
     { id: 'm3', text: 'القوة الدافعة الكهربية (V_B)', matchTarget: 'Volt' }
   ]);
   database.run(
-    `INSERT INTO questions (id, bank_id, type, text, subject, chapter, lesson, topic, difficulty, estimated_time, score, tags_json, hints, explanation, options_json, correct_answer_json, created_at, updated_at)
+    `INSERT OR IGNORE INTO questions (id, bank_id, type, text, subject, chapter, lesson, topic, difficulty, estimated_time, score, tags_json, hints, explanation, options_json, correct_answer_json, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       'q-phys-3', bankId, 'matching',
@@ -382,7 +383,7 @@ function seedDefaultData(database: Database) {
   // Demo Exam
   const examId = 'exam-phys-2026';
   database.run(
-    `INSERT INTO exams (
+    `INSERT OR IGNORE INTO exams (
       id, title, description, subject_id, bank_id, created_by, mode,
       duration_minutes, passing_percentage, start_date, end_date, allowed_attempts,
       show_result_immediately, show_answers, negative_marking, calculator_allowed,
@@ -403,7 +404,7 @@ function seedDefaultData(database: Database) {
 
   // Demo Announcement
   database.run(
-    `INSERT INTO announcements (id, title, content, target_role, created_by, created_at, is_pinned)
+    `INSERT OR IGNORE INTO announcements (id, title, content, target_role, created_by, created_at, is_pinned)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       'ann-1',
@@ -414,15 +415,15 @@ function seedDefaultData(database: Database) {
   );
 
   // Initial settings
-  database.run(`INSERT INTO settings (key, value) VALUES ('platformName', 'البشمهندس')`);
-  database.run(`INSERT INTO settings (key, value) VALUES ('platformNameAr', 'منصة البشمهندس لإدارة الامتحانات المحليّة')`);
-  database.run(`INSERT INTO settings (key, value) VALUES ('primaryColor', '#FFD600')`);
-  database.run(`INSERT INTO settings (key, value) VALUES ('secondaryColor', '#000000')`);
-  database.run(`INSERT INTO settings (key, value) VALUES ('maxWarningsAllowed', '3')`);
+  database.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('platformName', 'البشمهندس')`);
+  database.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('platformNameAr', 'منصة البشمهندس لإدارة الامتحانات المحليّة')`);
+  database.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('primaryColor', '#FFD600')`);
+  database.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('secondaryColor', '#000000')`);
+  database.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('maxWarningsAllowed', '3')`);
 
   // Activity Log
   database.run(
-    `INSERT INTO activity_logs (id, user_id, user_name, user_role, action, details, ip_address, timestamp)
+    `INSERT OR IGNORE INTO activity_logs (id, user_id, user_name, user_role, action, details, ip_address, timestamp)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     ['log-1', 'u-admin-1', 'البشمهندس / Admin', 'admin', 'SYSTEM_INIT', 'تم تهيئة قاعدة البيانات المحلية SQLite بنجاح', '127.0.0.1', now]
   );
