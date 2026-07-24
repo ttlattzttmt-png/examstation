@@ -31,6 +31,7 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState('تم الحفظ تلقائياً');
   const [isLoading, setIsLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     startExamSession();
@@ -38,7 +39,7 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
 
   // Countdown Timer
   useEffect(() => {
-    if (!session || remainingSeconds <= 0) return;
+    if (!session || remainingSeconds <= 0 || isPaused) return;
 
     const interval = setInterval(() => {
       setRemainingSeconds((prev) => {
@@ -52,7 +53,7 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [session, remainingSeconds]);
+  }, [session, remainingSeconds, isPaused]);
 
   // Periodic Auto-Save
   useEffect(() => {
@@ -89,7 +90,7 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
     if (!session) return;
     try {
       setAutoSaveStatus('جاري الحفظ...');
-      await api.syncExamSession(session.id, {
+      const res = await api.syncExamSession(session.id, {
         answers,
         flaggedQuestions: flagged,
         currentQuestionIndex: currentIndex,
@@ -98,6 +99,18 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
         fullscreenViolationsCount: 0,
       });
       setAutoSaveStatus('تم الحفظ تلقائياً');
+
+      if (res.status === 'paused') {
+        setIsPaused(true);
+      } else if (res.status === 'in_progress') {
+        setIsPaused(false);
+      } else if (res.status === 'auto_submitted' || res.status === 'submitted') {
+        handleAutoSubmit();
+      }
+
+      if (typeof res.remainingSeconds === 'number' && res.remainingSeconds > remainingSeconds) {
+        setRemainingSeconds(res.remainingSeconds);
+      }
     } catch (e) {
       setAutoSaveStatus('تعذر الحفظ المؤقت');
     }
@@ -167,6 +180,21 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
     >
       <WatermarkOverlay text={session.watermarkText} />
 
+      {/* Paused Overlay */}
+      {isPaused && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6 text-center">
+          <div className="max-w-md rounded-3xl border border-yellow-500/40 bg-[#181818] p-8 space-y-4 shadow-2xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-500/10 text-yellow-400 border border-yellow-500/30">
+              <Clock size={32} className="animate-spin" />
+            </div>
+            <h3 className="text-xl font-black text-yellow-400">الاختبار متوقف مؤقتاً</h3>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              قام مراقب اللجان بإيقاف اختبارك مؤقتاً لمراجعة حالة أو تمديد وقت. يرجى الانتظار حتى يقوم المراقب باستئناف الاختبار لك.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="min-h-screen flex flex-col justify-between max-w-6xl mx-auto p-4 relative z-10">
         {/* Top Sticky Exam Bar */}
         <header className="sticky top-2 z-40 rounded-2xl border border-yellow-500/30 bg-[#181818]/95 p-4 backdrop-blur-xl shadow-2xl flex flex-wrap items-center justify-between gap-4">
@@ -221,6 +249,18 @@ export const StudentExamView: React.FC<StudentExamViewProps> = ({ examId, onFini
               <div className="text-lg font-bold text-gray-100 leading-relaxed">
                 <FormattedQuestionText text={currentQ.text} />
               </div>
+
+              {/* Question Image (If Uploaded or Linked) */}
+              {currentQ.mediaUrl && (
+                <div className="my-4 overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-3 flex flex-col items-center justify-center">
+                  <img
+                    src={currentQ.mediaUrl}
+                    alt="صورة السؤال"
+                    className="max-h-96 w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/5"
+                  />
+                  <span className="text-[10px] text-white/40 mt-2">صورة توضيحية للسؤال</span>
+                </div>
+              )}
 
               {/* Options */}
               {currentQ.options && currentQ.options.length > 0 && (

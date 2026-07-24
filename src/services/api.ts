@@ -173,7 +173,7 @@ export const api = {
       fullscreenViolationsCount: number;
     }
   ) =>
-    fetchJson<{ success: boolean; syncedAt: string }>(`/api/exam-sessions/${sessionId}/sync`, {
+    fetchJson<{ success: boolean; status?: string; remainingSeconds?: number; syncedAt: string }>(`/api/exam-sessions/${sessionId}/sync`, {
       method: 'POST',
       body: JSON.stringify(syncData),
     }),

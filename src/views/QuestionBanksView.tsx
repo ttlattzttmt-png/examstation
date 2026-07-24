@@ -230,6 +230,12 @@ export const QuestionBanksView: React.FC = () => {
 
                       <p className="text-sm font-bold text-white/90 leading-relaxed">{q.text}</p>
 
+                      {q.mediaUrl && (
+                        <div className="my-2 max-w-xs rounded-xl overflow-hidden border border-white/10 bg-black/40 p-1">
+                          <img src={q.mediaUrl} alt="صورة السؤال" className="max-h-32 object-contain rounded-lg" />
+                        </div>
+                      )}
+
                       {q.options && q.options.length > 0 && (
                         <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                           {q.options.map((opt: any, oIdx: number) => (

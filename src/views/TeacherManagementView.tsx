@@ -201,13 +201,19 @@ export const TeacherManagementView: React.FC = () => {
                   تاريخ التسجيل: {new Date(tch.createdAt).toLocaleDateString('ar-EG')}
                 </span>
 
-                <button
-                  onClick={() => handleDeleteTeacher(tch.id, tch.fullName)}
-                  className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all"
-                  title="حذف حساب المعلم"
-                >
-                  <Trash2 size={15} />
-                </button>
+                {tch.role === 'admin' ? (
+                  <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-1 rounded-xl border border-purple-500/20">
+                    حساب مدير محمي
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleDeleteTeacher(tch.id, tch.fullName)}
+                    className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all"
+                    title="حذف حساب المعلم"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
             </div>
           ))}

@@ -275,7 +275,11 @@ async function startServer() {
   });
 
   app.delete('/api/teachers/:id', (req: Request, res: Response) => {
-    runSql(`DELETE FROM users WHERE id = ? AND role IN ('teacher', 'admin')`, [req.params.id]);
+    const targetUser = queryOne(`SELECT * FROM users WHERE id = ?`, [req.params.id]);
+    if (targetUser && (targetUser.role === 'admin' || targetUser.username === 'admin' || targetUser.id === 'u-admin-1')) {
+      return res.status(403).json({ error: 'لا يمكن حذف حساب مدير المنصة (Admin) أبدًا لأسباب أمنية.' });
+    }
+    runSql(`DELETE FROM users WHERE id = ? AND role = 'teacher'`, [req.params.id]);
     res.json({ success: true });
   });
 
@@ -770,6 +774,34 @@ async function startServer() {
     const { answers, flaggedQuestions, currentQuestionIndex, remainingSeconds, warningsCount, fullscreenViolationsCount } = req.body;
     const now = new Date().toISOString();
 
+    const currentSession = queryOne(`SELECT * FROM exam_sessions WHERE id = ?`, [sessionId]);
+    if (!currentSession) {
+      return res.status(404).json({ error: 'الجلسة غير موجودة' });
+    }
+
+    if (currentSession.status === 'paused') {
+      return res.json({
+        success: true,
+        status: 'paused',
+        remainingSeconds: currentSession.remaining_seconds,
+        syncedAt: now,
+      });
+    }
+
+    if (currentSession.status === 'submitted' || currentSession.status === 'auto_submitted') {
+      return res.json({
+        success: true,
+        status: currentSession.status,
+        remainingSeconds: currentSession.remaining_seconds,
+        syncedAt: now,
+      });
+    }
+
+    let finalSeconds = remainingSeconds;
+    if (typeof currentSession.remaining_seconds === 'number' && currentSession.remaining_seconds > remainingSeconds + 5) {
+      finalSeconds = currentSession.remaining_seconds;
+    }
+
     runSql(
       `UPDATE exam_sessions SET
         answers_json = ?,
@@ -779,12 +811,12 @@ async function startServer() {
         warnings_count = ?,
         fullscreen_violations_count = ?,
         last_activity = ?
-       WHERE id = ? AND status = 'in_progress'`,
+       WHERE id = ?`,
       [
         JSON.stringify(answers || {}),
         JSON.stringify(flaggedQuestions || []),
         currentQuestionIndex || 0,
-        remainingSeconds,
+        finalSeconds,
         warningsCount || 0,
         fullscreenViolationsCount || 0,
         now,
@@ -792,7 +824,12 @@ async function startServer() {
       ]
     );
 
-    res.json({ success: true, syncedAt: now });
+    res.json({
+      success: true,
+      status: currentSession.status,
+      remainingSeconds: finalSeconds,
+      syncedAt: now,
+    });
   });
 
   // Submit Exam Session & Calculate Score

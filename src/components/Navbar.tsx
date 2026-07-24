@@ -4,16 +4,17 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Wifi, LogOut, User as UserIcon, Shield, Clock } from 'lucide-react';
+import { Wifi, LogOut, User as UserIcon, Shield, Clock, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NetworkInfoModal } from './NetworkInfoModal';
 
 interface NavbarProps {
   currentTab: string;
   onTabChange: (tab: string) => void;
+  onToggleMobileMenu?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange, onToggleMobileMenu }) => {
   const { user, logout } = useAuth();
   const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [timeString, setTimeString] = useState('');
@@ -32,15 +33,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-white/5 bg-[#0A0A0A]/80 px-6 backdrop-blur-md shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onTabChange('dashboard')}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFD600] font-black text-black shadow-[0_0_15px_rgba(255,214,0,0.3)] text-xl tracking-tighter">
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-white/5 bg-[#0A0A0A]/80 px-4 sm:px-6 backdrop-blur-md shadow-lg">
+        <div className="flex items-center gap-3">
+          {user && user.role !== 'student' && onToggleMobileMenu && (
+            <button
+              onClick={onToggleMobileMenu}
+              className="flex md:hidden rounded-xl bg-white/5 p-2 text-white/80 hover:bg-white/10"
+              title="القائمة"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onTabChange('dashboard')}>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFD600] font-black text-black shadow-[0_0_15px_rgba(255,214,0,0.3)] text-lg tracking-tighter">
               ب
             </div>
             <div>
-              <h1 className="text-lg font-black text-[#FFD600] tracking-tight">البشمهندس</h1>
-              <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">منصة الامتحانات المحليّة (LAN)</p>
+              <h1 className="text-base sm:text-lg font-black text-[#FFD600] tracking-tight">البشمهندس</h1>
+              <p className="text-[9px] sm:text-[10px] font-semibold text-white/40 uppercase tracking-wider">منصة الامتحانات (LAN)</p>
             </div>
           </div>
 

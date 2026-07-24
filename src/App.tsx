@@ -28,6 +28,7 @@ function AppContent() {
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -72,12 +73,21 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white font-sans selection:bg-[#FFD600] selection:text-black dir-rtl" dir="rtl">
-      <Navbar currentTab={currentTab} onTabChange={setCurrentTab} />
+      <Navbar
+        currentTab={currentTab}
+        onTabChange={setCurrentTab}
+        onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+      />
 
       <div className="flex">
-        <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
+        <Sidebar
+          currentTab={currentTab}
+          onTabChange={setCurrentTab}
+          isOpenMobile={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
 
-        <main className="flex-1 p-6 overflow-x-hidden min-h-[calc(100vh-4rem)]">
+        <main className="flex-1 p-3 sm:p-6 overflow-x-hidden min-h-[calc(100vh-4rem)]">
           {user.role === 'student' ? (
             <StudentDashboardView
               onStartExam={(eId) => setActiveExamId(eId)}
@@ -91,11 +101,11 @@ function AppContent() {
               {currentTab === 'exams' && <ExamManagerView />}
               {currentTab === 'results' && <ResultsManagerView onViewResult={(rId) => setActiveResultId(rId)} />}
               {currentTab === 'students' && <StudentManagementView />}
-              {currentTab === 'teachers' && <TeacherManagementView />}
+              {currentTab === 'teachers' && user.role === 'admin' && <TeacherManagementView />}
               {currentTab === 'subjects' && <SubjectsView />}
-              {currentTab === 'backups' && <BackupView />}
-              {currentTab === 'logs' && <LogsView />}
-              {currentTab === 'settings' && <SettingsView />}
+              {currentTab === 'backups' && user.role === 'admin' && <BackupView />}
+              {currentTab === 'logs' && user.role === 'admin' && <LogsView />}
+              {currentTab === 'settings' && user.role === 'admin' && <SettingsView />}
             </>
           )}
         </main>
