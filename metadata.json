@@ -1,0 +1,6 @@
+{
+  "name": "البشمهندس (El Bashmohandes)",
+  "description": "Offline-First LAN Examination Management Platform with Smart Question Banks, Anti-Cheating Controls, Live Monitoring, and Analytics",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
